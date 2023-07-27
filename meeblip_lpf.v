@@ -187,6 +187,9 @@
 
 // does the code above manages signed input ?
 
+// original code from meeblip
+// https://github.com/MeeBlip/meeblip-synth/blob/master/meeblip-se-v2.asm
+
 module DigitallyControlledFilter (
     input clk,
     input signed [15:0] audio_in,
