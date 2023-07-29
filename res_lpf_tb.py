@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 #
-# generate a testbench for the moog filter above that injects a square wave, 
-# while sweeping over cutoff, resonance and gain. the testbench shall be written for pyverilator
-
 from pueda.pyverilator import pyverilator_wrapper
 
 def main_test(xen=True):
     # Load the Verilog module
-    dut = pyverilator_wrapper('moog_filter.v',
+    dut = pyverilator_wrapper('res_lpf_fix.v',
                             dump_en=True, # dump_fst=True,
-                            dump_filename='moog_filter')
+                            dump_filename='res_lpf')
 
     # Set initial values for the parameters
-    cutoff = 32
-    resonance = 0
-    gain = 32
+    cutoff = 128 # 0x7000
+    resonance = 0x7000
+    # gain = 32
     nsamples = 1000
+    input_peak = 32
+
+    dut.sim.io.reset_n = 1
+    dut.sim.clock.tick()
 
     # Simulation loop
     # for time_step in range(sim.time_step): # AttributeError: 'PyVerilator' object has no attribute 'finish'. Did you mean: 'finished'?
@@ -23,10 +24,10 @@ def main_test(xen=True):
         # Update the parameter values for each time step
         dut.sim.io.cutoff = cutoff
         dut.sim.io.resonance = resonance
-        dut.sim.io.gain = gain
+        # dut.sim.io.gain = gain
 
         # Generate the square wave input signal
-        input_signal = 0x7FFF if time_step % 100 < 50 else 0x8000
+        input_signal = input_peak if time_step % 100 < 50 else -input_peak
 
         # Apply the input signal to the Moog filter
         dut.sim.io.audio_in = input_signal
@@ -35,7 +36,7 @@ def main_test(xen=True):
         dut.sim.clock.tick()
         
         # Read the output signal from the Moog filter
-        output_signal = dut.sim.io.audio_out
+        # output_signal = dut.sim.io.audio_out
 
         # Perform any required analysis or verification here
 
@@ -46,7 +47,7 @@ def main_test(xen=True):
 
     if True:
         if xen:
-            dut.view_waves(savefname='moog_filter.gtkw')
+            dut.view_waves(savefname='res_lpf.gtkw')
         else:
             dut.view_waves(mode='vcdterm')
 

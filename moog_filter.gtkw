@@ -1,31 +1,38 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Sun Jul 23 15:43:50 2023
+[*] Sat Jul 29 15:06:31 2023
 [*]
-[dumpfile] "/media/marco/DATA/programming/rtl/aisynth/moog_filter.fst"
-[dumpfile_mtime] "Sun Jul 23 15:43:16 2023"
-[dumpfile_size] 253880
+[dumpfile] "/media/marco/DATA/programming/rtl/aisynth/moog_filter.vcd"
+[dumpfile_mtime] "Sat Jul 29 15:05:52 2023"
+[dumpfile_size] 94652
 [savefile] "/media/marco/DATA/programming/rtl/aisynth/moog_filter.gtkw"
 [timestart] 5
 [size] 1530 836
-[pos] -1 -1
-*-11.013453 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[pos] 0 27
+*-10.562719 15 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] TOP.
 [sst_width] 276
-[signals_width] 177
+[signals_width] 210
 [sst_expanded] 1
-[sst_vpaned_height] 226
+[sst_vpaned_height] 227
+@28
+TOP.clk
 @8420
-TOP.MoogFilter.audio_in[15:0]
-TOP.MoogFilter.audio_out[15:0]
-TOP.MoogFilter.lowpass[15:0]
-@8421
-TOP.MoogFilter.highpass[15:0]
-@8420
-TOP.MoogFilter.bandpass[15:0]
+TOP.audio_in[15:0]
+TOP.audio_out[15:0]
 @22
-TOP.MoogFilter.cutoff[7:0]
-TOP.MoogFilter.gain[7:0]
-TOP.MoogFilter.resonance[7:0]
+TOP.cutoff[15:0]
+TOP.resonance[15:0]
+TOP.DigitallyControlledFilter.temp1[15:0]
+@8421
+TOP.DigitallyControlledFilter.temp2[15:0]
+@8420
+TOP.DigitallyControlledFilter.temp3[15:0]
+@22
+TOP.DigitallyControlledFilter.a[15:0]
+@8420
+TOP.DigitallyControlledFilter.b[15:0]
+@22
+TOP.DigitallyControlledFilter.q[15:0]
 [pattern_trace] 1
 [pattern_trace] 0

@@ -190,11 +190,106 @@
 // original code from meeblip
 // https://github.com/MeeBlip/meeblip-synth/blob/master/meeblip-se-v2.asm
 
+// can you make a separate module to calculate saturation, 
+// and split each temp stage to a different variable ?
+
+// the Saturation module is not instanciated in this new code
+
+// in the previous code each temp stage had its own saturation calculation, 
+// can you instantiate a saturation module for each temp stage ?
+
+// the blocks have no reset signal
+
+// it is usually better for reset signal to be active on low level
+
+// The compiling returns the following warnirngs and errors: 
+// %Warning-COMBDLY: meeblip_lpf.v:217:27: Delayed assignments (<=) in non-clocked (non flop or latch) block
+//     : ... Suggest blocking assignments (=)
+// 217 |             output_signal <= 0;
+// |                           ^~
+// ... Use "/* verilator lint_off COMBDLY */" and lint_on around source to disable this message.
+// *** See the manual before disabling this,
+// else you may end up with different sim results.
+// %Warning-MULTIDRIVEN: meeblip_lpf.v:239:23: Signal has multiple driving blocks with different clocking: 'DigitallyControlledFilter.a'
+// meeblip_lpf.v:294:13: ... Location of first driving block
+// 294 |             a <= 0;
+// |             ^
+// meeblip_lpf.v:273:9: ... Location of other driving block
+// 273 |         a <= a + cutoff * temp3;
+// |         ^
+// %Warning-MULTIDRIVEN: meeblip_lpf.v:236:30: Signal has multiple driving blocks with different clocking: 'audio_out'
+// meeblip_lpf.v:298:13: ... Location of first driving block
+// 298 |             audio_out <= 0;
+// |             ^~~~~~~~~
+// meeblip_lpf.v:279:9: ... Location of other driving block
+// 279 |         audio_out <= temp1 + temp2;
+// |         ^~~~~~~~~
+// %Warning-MULTIDRIVEN: meeblip_lpf.v:240:23: Signal has multiple driving blocks with different clocking: 'DigitallyControlledFilter.b'
+// meeblip_lpf.v:295:13: ... Location of first driving block
+// 295 |             b <= 0;
+// |             ^
+// meeblip_lpf.v:276:9: ... Location of other driving block
+// 276 |         b <= b + temp1;
+// |         ^
+// %Error-BLKANDNBLK: meeblip_lpf.v:241:23: Unsupported: Blocked and non-blocking assignments to same variable: 'DigitallyControlledFilter.q'
+// 241 |     reg signed [15:0] q;
+// |                       ^
+// %Warning-MULTIDRIVEN: meeblip_lpf.v:242:23: Signal has multiple driving blocks with different clocking: 'DigitallyControlledFilter.scaled_resonance'
+// meeblip_lpf.v:297:13: ... Location of first driving block
+// 297 |             scaled_resonance <= 0;
+// |             ^~~~~~~~~~~~~~~~
+// meeblip_lpf.v:288:9: ... Location of other driving block
+// 288 |         scaled_resonance <= resonance - (cutoff + Q_OFFSET);
+// |         ^~~~~~~~~~~~~~~~
+
+// each signal should be assigned by a single process
+
+// to fix errors you can make a single process to initialize and update a,b,q,scaled_resonance and audio_out
+
+// update of q and scaled_resonance is still in a separate process, merge their update with the main process
+
+// I think the saturation module should be combinatorial
+
+// the saturation module seems to saturate even though it should not
+
+// looks the same as before to me. I suspect the issue are signed comparison not implemented correctly
+
+// apply $signed to all assigments
+
+// in the comparison of saturation, the $signed needs to be on both sides
+
+// you can use the saturation module for audio_out too
+
+// you should not assign a register to itself in a verilog non-combinatorial process
+
+// why did you remove the saturation module applied to audio_out ?
+
+module Saturation (
+    input signed [15:0] input_signal,
+    output reg signed [15:0] output_signal
+);
+
+    // Constants
+    parameter [15:0] MAX_POS_VALUE = 16'h7FFF;
+    parameter [15:0] MIN_NEG_VALUE = -16'h8000;
+
+    always @* begin
+        if ($signed(input_signal) > $signed(MAX_POS_VALUE))
+            output_signal = $signed(MAX_POS_VALUE);
+        else if ($signed(input_signal) < $signed(MIN_NEG_VALUE))
+            output_signal = $signed(MIN_NEG_VALUE);
+        else
+            output_signal = input_signal;
+    end
+
+endmodule
+
 module DigitallyControlledFilter (
     input clk,
     input signed [15:0] audio_in,
     input [15:0] cutoff,
     input [15:0] resonance,
+    input reset_n,
     output reg signed [15:0] audio_out
 );
 
@@ -202,65 +297,61 @@ module DigitallyControlledFilter (
     reg signed [15:0] b;
     reg signed [15:0] q;
     reg signed [15:0] scaled_resonance;
-    reg signed [15:0] temp;
+    reg signed [15:0] temp1;
+    reg signed [15:0] temp2;
+    reg signed [15:0] temp3;
+    // Temporary variables for calculations
+    reg signed [15:0] temp_a;
+    reg signed [15:0] temp_b;
+    reg signed [15:0] temp_audio_out;
 
     // Constants
     parameter [15:0] ONE = 16'h7FFF;
     parameter [15:0] ZERO = 16'h0000;
     parameter [15:0] Q_OFFSET = 16'hXXXX; // Replace XXXX with the desired value.
 
-    always @(posedge clk) begin
-        // Calculate (in - a) and handle overflow
-        temp = audio_in - a;
-        if (temp > ONE) temp = ONE; // Overflow handling
-        if (temp < -ONE) temp = -ONE;
+    // Instantiate the Saturation module for intermediate signals
+    Saturation sat_inst1(
+        .input_signal(audio_in - a),
+        .output_signal(temp1)
+    );
 
-        // Calculate q * (a - b) and handle overflow
-        temp = q * (a - b);
-        if (temp > ONE) temp = ONE; // Overflow handling
-        if (temp < -ONE) temp = -ONE;
+    Saturation sat_inst2(
+        .input_signal(temp1 + temp2),
+        .output_signal(temp2)
+    );
 
-        // Calculate (in - a) + q * (a - b) and handle overflow
-        temp = (audio_in - a) + q * (a - b);
-        if (temp > ONE) temp = ONE; // Overflow handling
-        if (temp < -ONE) temp = -ONE;
-
-        // Update a
-        a = a + cutoff * temp;
-
-        // Calculate f * (a - b) and handle overflow
-        temp = cutoff * (a - b);
-        if (temp > ONE) temp = ONE; // Overflow handling
-        if (temp < -ONE) temp = -ONE;
-
-        // Update b
-        b = b + temp;
-
-        // Calculate f * ((in - a) + q * (a - b)) and handle overflow
-        temp = cutoff * ((audio_in - a) + q * (a - b));
-        if (temp > ONE) temp = ONE; // Overflow handling
-        if (temp < -ONE) temp = -ONE;
-
-        // Output the filtered audio
-        audio_out = temp;
-    end
-
-    // Additional logic for calculating f and q
-    always @(cutoff, resonance) begin
-        q = resonance - (cutoff + Q_OFFSET);
-    end
+    // Instantiate the Saturation module for audio_out
+    Saturation sat_inst3(
+        .input_signal(temp2),
+        .output_signal(audio_out)
+    );
 
     always @(posedge clk) begin
-        scaled_resonance = resonance - (cutoff + Q_OFFSET);
-    end
+        if (!reset_n) begin
+            a <= $signed(0);
+            b <= $signed(0);
+            q <= $signed(0);
+            scaled_resonance <= $signed(0);
+            temp2 <= $signed(0);
+            audio_out <= $signed(0);
+        end else begin
+            // Update q and scaled_resonance
+            q <= $signed(resonance - (cutoff + Q_OFFSET));
+            scaled_resonance <= $signed(resonance - (cutoff + Q_OFFSET));
 
-    // Initialization
-    initial begin
-        a <= 16'h0000;
-        b <= 16'h0000;
-        q <= 16'h0000;
-        scaled_resonance <= 16'h0000;
-        audio_out <= 16'h0000;
+
+
+            // Calculate a, b, and temp_audio_out
+            temp_a = $signed(a + cutoff * temp3);
+            temp_b = $signed(b + temp1);
+            temp_audio_out = $signed(temp1 + temp2);
+
+            // Update registers with temporary values
+            a <= temp_a;
+            b <= temp_b;
+            temp2 <= temp_audio_out;
+        end
     end
 
 endmodule

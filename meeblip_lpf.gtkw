@@ -1,0 +1,28 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Sat Jul 29 14:11:52 2023
+[*]
+[dumpfile] "/media/marco/DATA/programming/rtl/aisynth/moog_filter.vcd"
+[dumpfile_mtime] "Sat Jul 29 14:10:26 2023"
+[dumpfile_size] 73391
+[savefile] "/media/marco/DATA/programming/rtl/aisynth/meeblip_lpf.gtkw"
+[timestart] 5100
+[size] 1530 836
+[pos] 0 27
+*-10.399578 8833 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] TOP.
+[sst_width] 276
+[signals_width] 307
+[sst_expanded] 1
+[sst_vpaned_height] 227
+@28
+TOP.clk
+@8420
+TOP.audio_in[15:0]
+TOP.audio_out[15:0]
+@22
+TOP.cutoff[15:0]
+@23
+TOP.resonance[15:0]
+[pattern_trace] 1
+[pattern_trace] 0

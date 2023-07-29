@@ -1,0 +1,22 @@
+[*]
+[*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
+[*] Sat Jul 29 20:29:02 2023
+[*]
+[dumpfile] "/media/marco/DATA/programming/rtl/aisynth/res_lpf.vcd"
+[dumpfile_mtime] "Sat Jul 29 20:27:54 2023"
+[dumpfile_size] 34772
+[savefile] "/media/marco/DATA/programming/rtl/aisynth/res_lpf.gtkw"
+[timestart] 5
+[size] 1530 836
+[pos] -51 -51
+*-12.000000 2720 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[sst_width] 233
+[signals_width] 324
+[sst_expanded] 1
+[sst_vpaned_height] 226
+@8420
+TOP.audio_in[15:0]
+@8421
+TOP.filtered_audio[15:0]
+[pattern_trace] 1
+[pattern_trace] 0
